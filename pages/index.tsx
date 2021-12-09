@@ -12,7 +12,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     return { redirect: { permanent: false, destination: "/auth/login" } };
   }
 
-  return { redirect: { permanent: false, destination: "/sites" } };
+  return { redirect: { permanent: false, destination: "/forms" } };
 }
 
 export default RedirectPage;

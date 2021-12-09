@@ -20,7 +20,7 @@ export default function SettingsShell({ children }: { children: React.ReactNode 
       icon: KeyIcon,
     },
     {
-      name: t("sites"),
+      name: t("forms"),
       href: "/settings/sites",
       icon: UserGroupIcon,
     },

@@ -47,12 +47,12 @@ import Dropdown, {
 //import UserCalendarIllustration from "@components/ui/svg/UserCalendarIllustration";
 
 
-type Profiles = inferQueryOutput<"viewer.websites">["profiles"];
+type Profiles = inferQueryOutput<"viewer.forms">["profiles"];
 interface CreateEventTypeProps {
-  canAddEvents: boolean;
+  canAddForms: boolean;
 }
 
-const CreateFirstEventTypeView = ({ canAddEvents }: CreateEventTypeProps) => {
+const CreateFirstEventTypeView = ({ canAddForms }: CreateEventTypeProps) => {
   const { t } = useLocale();
 
   return (
@@ -63,10 +63,10 @@ const CreateFirstEventTypeView = ({ canAddEvents }: CreateEventTypeProps) => {
         <p className="mt-1 mb-2 text-md text-neutral-600">{t("new_event_type_description")}</p>
         {/* <CreateNewEventButton canAddEvents={canAddEvents} profiles={profiles} /> */}
         <Button 
-          data-testid="new-website"
-          {...(canAddEvents
+          data-testid="new-form"
+          {...(canAddForms
             ? {
-              href:"/sites/create"
+              href:"/forms/create"
               }
             : {
               disabled:true
@@ -79,59 +79,59 @@ const CreateFirstEventTypeView = ({ canAddEvents }: CreateEventTypeProps) => {
   );
 };
 
-type WebsiteGroup = inferQueryOutput<"viewer.websites">["websiteGroups"][number];
-type Website = WebsiteGroup["websites"][number];
-interface WebsiteListProps {
+type FormGroup = inferQueryOutput<"viewer.forms">["formGroups"][number];
+type Form = FormGroup["forms"][number];
+interface FormListProps {
   profile: { slug: string | null}
-  sites: Website[];
+  forms: Form[];
 }
 
-const WebsiteList = ({ sites }: WebsiteListProps): JSX.Element => {
+const WebsiteList = ({ profile, forms }: FormListProps): JSX.Element => {
   const { t } = useLocale();
 
   const utils = trpc.useContext();
-  const mutation = trpc.useMutation("viewer.websiteOrder", {
+  const mutation = trpc.useMutation("viewer.formOrder", {
     onError: (err) => {
       console.error(err.message);
     },
     async onSettled() {
-      await utils.cancelQuery(["viewer.websites"]);
-      await utils.invalidateQueries(["viewer.websites"]);
+      await utils.cancelQuery(["viewer.forms"]);
+      await utils.invalidateQueries(["viewer.forms"]);
     },
   });
-  const [sortableSites, setSortableSites] = useState(sites);
+  const [sortableForms, setSortableForms] = useState(forms);
   useEffect(() => {
-    setSortableSites(sites);
-  }, [sites]);
+    setSortableForms(forms);
+  }, [forms]);
   function moveEventType(index: number, increment: 1 | -1) {
-    const newList = [...sortableSites];
+    const newList = [...sortableForms];
 
-    const type = sortableSites[index];
-    const tmp = sortableSites[index + increment];
+    const type = sortableForms[index];
+    const tmp = sortableForms[index + increment];
     if (tmp) {
       newList[index] = tmp;
       newList[index + increment] = type;
     }
-    setSortableSites(newList);
+    setSortableForms(newList);
     mutation.mutate({
-      ids: newList.map((site) => site.id),
+      ids: newList.map((form) => form.id),
     });
   }
 
   return (
     <div className="mb-16 -mx-4 overflow-hidden bg-white border border-gray-200 rounded-sm sm:mx-0">
-      <ul className="divide-y divide-neutral-200" data-testid="websites">
-        {sortableSites.map((site, index) => (
+      <ul className="divide-y divide-neutral-200" data-testid="forms">
+        {sortableForms.map((form, index) => (
           <li
-            key={site.id}
+            key={form.id}
             className={classNames(
-              site.$disabled && "opacity-30 cursor-not-allowed pointer-events-none select-none"
+              form.$disabled && "opacity-30 cursor-not-allowed pointer-events-none select-none"
             )}
-            data-disabled={site.$disabled ? 1 : 0}>
+            data-disabled={form.$disabled ? 1 : 0}>
             <div
               className={classNames(
                 "hover:bg-neutral-50 flex justify-between items-center ",
-                site.$disabled && "pointer-events-none"
+                form.$disabled && "pointer-events-none"
               )}>
               <div className="flex items-center justify-between w-full px-4 py-4 group sm:px-6 hover:bg-neutral-50">
                 <button
@@ -144,20 +144,15 @@ const WebsiteList = ({ sites }: WebsiteListProps): JSX.Element => {
                   onClick={() => moveEventType(index, 1)}>
                   <ArrowDownIcon />
                 </button>
-                <Link href={"/sites/" + site.id}>
+                <Link href={"/forms/" + form.id}>
                   <a
                     className="flex-grow text-sm truncate"
-                    title={`${site.title} ${site.description ? `– ${site.description}` : ""}`}>
+                    title={`${form.title} ${form.description ? `– ${form.description}` : ""}`}>
                     <div>
-                      <span className="font-medium truncate text-neutral-900">{site.title}</span>
-                      {site.hidden && (
-                        <span className="ml-12 inline items-center px-1.5 py-0.5 rounded-sm text-xs font-medium bg-yellow-100 text-yellow-800">
-                          {t("hidden")}
-                        </span>
-                      )}
-                      {site.status && (
+                      <span className="font-medium truncate text-neutral-900">{form.title}</span>
+                      {form.status && (
                         <span className="ml-2 inline items-center px-1.5 py-0.5 rounded-sm text-xs font-medium bg-gray-100 text-gray-800">
-                          {site.status}
+                          {form.status}
                         </span>
                       )}
                     </div>
@@ -179,7 +174,7 @@ const WebsiteList = ({ sites }: WebsiteListProps): JSX.Element => {
                     )} */}
                     <Tooltip content={t("preview")}>
                       <a
-                        href={`${process.env.NEXT_PUBLIC_APP_URL}/sites/${site.slug}`}
+                        href={`${process.env.NEXT_PUBLIC_APP_URL}/sites/${form.slug}`}
                         target="_blank"
                         rel="noreferrer"
                         className="btn-icon">
@@ -192,7 +187,7 @@ const WebsiteList = ({ sites }: WebsiteListProps): JSX.Element => {
                         onClick={() => {
                           showToast(t("link_copied"), "success");
                           navigator.clipboard.writeText(
-                            `${process.env.NEXT_PUBLIC_APP_URL}/sites/${site.slug}`
+                            `${process.env.NEXT_PUBLIC_APP_URL}/sites/${form.slug}`
                           );
                         }}
                         className="btn-icon">
@@ -229,7 +224,7 @@ const WebsiteList = ({ sites }: WebsiteListProps): JSX.Element => {
                             <Menu.Item>
                               {({ active }) => (
                                 <a
-                                  href={`${process.env.NEXT_PUBLIC_APP_URL}/${profile.slug}/${type.slug}`}
+                                  href={`${process.env.NEXT_PUBLIC_APP_URL}/forms/${form.slug}`}
                                   target="_blank"
                                   rel="noreferrer"
                                   className={classNames(
@@ -250,7 +245,7 @@ const WebsiteList = ({ sites }: WebsiteListProps): JSX.Element => {
                                   onClick={() => {
                                     showToast("Link copied!", "success");
                                     navigator.clipboard.writeText(
-                                      `${process.env.NEXT_PUBLIC_APP_URL}/${profile.slug}/${type.slug}`
+                                      `${process.env.NEXT_PUBLIC_APP_URL}/forms/${form.slug}`
                                     );
                                   }}
                                   className={classNames(
@@ -280,12 +275,12 @@ const WebsiteList = ({ sites }: WebsiteListProps): JSX.Element => {
   );
 };
 
-interface WebsiteListHeadingProps {
+interface FormListHeadingProps {
   profile: {name:string, image:string};
-  websiteCount: number;
+  formCount: number;
 }
 
-const WebsiteListHeading = ({ profile,  websiteCount=0 }: WebsiteListHeadingProps): JSX.Element => (
+const WebsiteListHeading = ({ profile,  formCount=0 }: FormListHeadingProps): JSX.Element => (
   <div className="flex mb-4">
     <Link href="/settings/teams">
       <a>
@@ -301,26 +296,26 @@ const WebsiteListHeading = ({ profile,  websiteCount=0 }: WebsiteListHeadingProp
       <Link href="/settings/teams">
         <a className="font-bold">{profile?.name || ""}</a>
       </Link>
-      {websiteCount && (
+      {formCount && (
         <span className="relative ml-2 text-xs text-neutral-500 -top-px">
           <Link href="/settings/teams">
             <a>
               <Badge variant="gray">
                 <UsersIcon className="inline w-3 h-3 mr-1 -mt-px" />
-                {websiteCount}
+                {formCount}
               </Badge>
             </a>
           </Link>
         </span>
       )}
-      {profile?.slug && (
+      {/* {profile?.slug && (
         <Link href={`${process.env.NEXT_PUBLIC_APP_URL}/${profile.slug}`}>
           <a className="block text-xs text-neutral-500">{`${process.env.NEXT_PUBLIC_APP_URL?.replace(
             "https://",
             ""
           )}/${profile.slug}`}</a>
         </Link>
-      )}
+      )} */}
     </div>
   </div>
 );
@@ -328,13 +323,13 @@ const WebsiteListHeading = ({ profile,  websiteCount=0 }: WebsiteListHeadingProp
 
 const SiteTypesPage = () => {
   const { t } = useLocale();
-  const query = trpc.useQuery(["viewer.websites"]);
+  const query = trpc.useQuery(["viewer.forms"]);
   console.log(query.data,"sitepage");
   
   return (
     <div>
       <Head>
-        <title>Home | Cal.com</title>
+        <title>Home | InfinityForms.com</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Shell
@@ -342,12 +337,12 @@ const SiteTypesPage = () => {
         subtitle={t("event_types_page_subtitle")}
         CTA={
           query.data &&
-          query.data.viewer.totalWebsiteCount !==0 && (
+          query.data.viewer.totalFormCount !==0 && (
             <Button 
               data-testid="new-event-type"
-              {...(query.data.viewer.canAddEvents
+              {...(query.data.viewer.canAddForms
                 ? {
-                    href:"/sites/create"
+                    href:"/forms/create"
                   }
                 : {
                     disabled:true
@@ -362,7 +357,7 @@ const SiteTypesPage = () => {
         query={query}
         success={({ data }) => (
           <>
-            {data.viewer.plan === "FREE" && !data.viewer.canAddEvents && (
+            {data.viewer.plan === "FREE" && !data.viewer.canAddForms && (
               <Alert
                 severity="warning"
                 title={<>{t("plan_upgrade")}</>}
@@ -377,25 +372,25 @@ const SiteTypesPage = () => {
                 className="mb-4"
               />
             )}
-            {data.websiteGroups.map((group) => (
-              group.metadata.websiteCount !==0 &&
+            {data.formGroups.map((group) => (
+              group.metadata.formCount !==0 &&
               <Fragment key={group.profile.name}>
                 {/* hide list heading when there is only one (current user) */}
-                {(group.websites.length >= 1) && (
+                {(group.forms.length >= 1) && (
                   <WebsiteListHeading
                     profile={{name:group.profile.name,image:"sfsdaf"}}
-                    websiteCount={group.metadata.websiteCount}
+                    formCount={group.metadata.formCount}
                   />
                 )}
                 <WebsiteList
-                  sites={group.websites}
-                  readOnly={true}
+                  forms={group.forms}
+                  profile={{slug:"some_slug"}}
                 />
               </Fragment>
             ))}
 
-            {data.viewer.totalWebsiteCount === 0 && (
-              <CreateFirstEventTypeView canAddEvents={data.viewer.canAddEvents} />
+            {data.viewer.totalFormCount === 0 && (
+              <CreateFirstEventTypeView canAddForms={data.viewer.canAddForms} />
             )}
           </>
         )}

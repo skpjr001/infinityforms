@@ -74,20 +74,19 @@ const loggedInViewerRouter = createProtectedRouter()
     },
   })
 
-  .query("websites", {
+  .query("forms", {
     async resolve({ctx}) {
       const { prisma } = ctx;
-      const websiteSelect = Prisma.validator<Prisma.WebsiteSelect>()({
+      const formSelect = Prisma.validator<Prisma.FormSelect>()({
         id: true,
         title: true,
         slug: true,
         description: true,
         position: true,
-        hidden: true,
         url: true,
         status: true,
         hasCustomDomain: true,
-        websiteName: true
+        formName: true
       })
 
       const user = await prisma.user.findUnique({
@@ -100,8 +99,8 @@ const loggedInViewerRouter = createProtectedRouter()
           name: true,
           avatar: true,
           plan : true,
-          websites:{
-            select:websiteSelect,
+          forms:{
+            select: formSelect,
             orderBy:[
               {
                 position: "desc"
@@ -120,66 +119,66 @@ const loggedInViewerRouter = createProtectedRouter()
         throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       }
 
-      type WebsiteGroup = {
+      type FormGroup = {
         profile: {
           name: string,
         },
         metadata: {
-          websiteCount: number,
+          formCount: number,
         },
-        websites: (typeof user.websites[number] & {$disabled?: boolean})[];
+        forms: (typeof user.forms[number] & {$disabled?: boolean})[];
       }
 
-      let websiteGroups: WebsiteGroup[] = [];
+      let formGroups: FormGroup[] = [];
 
-      let customDomainWebsites = user.websites.filter(website => website.hasCustomDomain === true);
-      let subDomainWebsites = user.websites.filter(website => website.hasCustomDomain === false);
+      let customDomainForms = user.forms.filter(form => form.hasCustomDomain === true);
+      let subDomainForms = user.forms.filter(form => form.hasCustomDomain === false);
 
       //Free plan custom domain site limit
-      const customDomainMergedWebsites = customDomainWebsites.map((website,index) => ({
-        ...website,
+      const customDomainMergedForms = customDomainForms.map((form,index) => ({
+        ...form,
         $disabled: user.plan === "FREE" && index > 0,
       }))
 
       //Free plan sub domain site limit
-      const subDomainMergedWebsites = subDomainWebsites.map((website,index) => ({
-        ...website,
+      const subDomainMergedForms = subDomainForms.map((form,index) => ({
+        ...form,
         $disabled: user.plan === "FREE" && index > 0,
       }))
 
-      websiteGroups.push({
+      formGroups.push({
         profile: {
          name:"Custom Domain Websites" 
         },
         metadata: {
-          websiteCount: customDomainWebsites.length
+          formCount: customDomainForms.length
         },
-        websites:_.orderBy(customDomainMergedWebsites, ["position", "id"], ["desc", "asc"])
+        forms:_.orderBy(customDomainMergedForms, ["position", "id"], ["desc", "asc"])
       })
 
-      websiteGroups.push({
+      formGroups.push({
         profile: {
           name:"Sub Domain Websites"
          },
          metadata: {
-           websiteCount: subDomainWebsites.length
+           formCount: subDomainForms.length
          },
-         websites:_.orderBy(subDomainMergedWebsites, ["position", "id"], ["desc", "asc"])
+         forms:_.orderBy(subDomainMergedForms, ["position", "id"], ["desc", "asc"])
       })
 
 
       //For adding new websites
-      const canAddEvents = user.plan !== "FREE" || user.websites.length < 2;
+      const canAddForms = user.plan !== "FREE" || user.forms.length < 2;
 
       //console.log(user, canAddEvents);
       return {
         viewer: {
-          canAddEvents,
+          canAddForms,
           plan : user.plan,
-          totalWebsiteCount : user.websites.length
+          totalFormCount : user.forms.length
         },
-        websiteGroups: websiteGroups,
-        profiles: websiteGroups.map(group =>({
+        formGroups: formGroups,
+        profiles: formGroups.map(group =>({
           ...group.profile,
           ...group.metadata
         }))
@@ -266,13 +265,13 @@ const loggedInViewerRouter = createProtectedRouter()
     },
   })
 
-  .mutation("websiteOrder", {
+  .mutation("formOrder", {
     input: z.object({
       ids: z.array(z.number()),
     }),
     async resolve({ input, ctx }) {
       const { prisma, user } = ctx;
-      const allWebsites = await ctx.prisma.website.findMany({
+      const allForms = await ctx.prisma.form.findMany({
         select: {
           id: true,
         },
@@ -287,15 +286,15 @@ const loggedInViewerRouter = createProtectedRouter()
           ],
         },
       });
-      const allWebsiteIds = new Set(allWebsites.map((website) => website.id));
-      if (input.ids.some((id) => !allWebsiteIds.has(id))) {
+      const allFormIds = new Set(allForms.map((form) => form.id));
+      if (input.ids.some((id) => !allFormIds.has(id))) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
         });
       }
       await Promise.all(
         _.reverse(input.ids).map((id, position) => {
-          return prisma.website.update({
+          return prisma.form.update({
             where: {
               id,
             },

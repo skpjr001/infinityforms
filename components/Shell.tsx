@@ -130,10 +130,10 @@ export default function Shell(props: {
 
   const navigation = [
     {
-      name: t("sites"),
-      href: "/sites",
+      name: t("forms"),
+      href: "/forms",
       icon: LinkIcon,
-      current: router.asPath.startsWith("/sites"),
+      current: router.asPath.startsWith("/forms"),
     },
     {
       name: t("bookings"),
@@ -188,7 +188,7 @@ export default function Shell(props: {
     <>
       <CustomBranding val={user?.brandColor} />
       <HeadSeo
-        title={pageTitle ?? "Cal.com"}
+        title={pageTitle ?? "InfinityForms.com"}
         description={props.subtitle ? props.subtitle?.toString() : ""}
         nextSeoProps={{
           nofollow: true,
