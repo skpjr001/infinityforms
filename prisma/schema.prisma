@@ -7,21 +7,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Website {
+model Form {
   id           Int                  @id @default(autoincrement())
   title        String
   slug         String
   description  String?
   position     Int                  @default(0)
   url          String?
-  status       String               @default("Building")
-  hidden       Boolean              @default(false)
+  status       Boolean               @default(false)
   userId       Int?
-  websiteName  String?
+  formName     String?
   hasCustomDomain Boolean           @default(false)
   subDomain    String?               
   customDomain String?
-  customInputs WebsiteCustomInput[]
+  customInputs FormCustomInput[]
   timeZone     String?
   //price                   Int                    @default(0)
   //currency                String                 @default("usd")
@@ -30,19 +29,19 @@ model Website {
   @@unique([userId, slug])
 }
 
-enum WebsiteCustomInputType {
+enum FormCustomInputType {
   TEXT      @map("text")
   TEXTLONG  @map("textLong")
   NUMBER    @map("number")
   BOOL      @map("bool")
 }
 
-model WebsiteCustomInput {
+model FormCustomInput {
   id          Int                    @id @default(autoincrement())
-  websiteId   Int
-  website     Website                @relation(fields: [websiteId], references: [id])
+  formId      Int
+  form        Form                @relation(fields: [formId], references: [id])
   label       String
-  type        WebsiteCustomInputType
+  type        FormCustomInputType
   required    Boolean
   placeholder String                 @default("")
 }
@@ -64,7 +63,7 @@ model User {
   hideBranding        Boolean   @default(false)
   theme               String?
   createdDate         DateTime  @default(now()) @map("created")
-  websites            Website[]
+  websites            Form[]
   completedOnboarding Boolean   @default(false)
   locale              String?
   twoFactorSecret     String?
